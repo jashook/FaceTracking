@@ -105,6 +105,8 @@ inline void face_detection(cv::Mat& image)
    // Print all the objects detected
    cv::rectangle(image, *face, cv::Scalar(255, 0, 0));
 
+   delete face;
+
 }
 
 inline bool process_frame(cv::Mat& frame)

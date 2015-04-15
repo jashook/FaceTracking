@@ -165,6 +165,8 @@ template<bool(*__ProcessingFunction)(cv::Mat&), bool __Gui = false, size_t __Thr
          #endif
 
       }
+
+      delete frame;
    }
 
    private: // Private Member functions
