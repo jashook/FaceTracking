@@ -44,6 +44,7 @@
 #include <vector>
 #include <chrono>
 
+#include "face_recognition.hpp"
 #include "timing_helper.hpp"
 #include "video_capture.hpp"
 
@@ -74,35 +75,37 @@ inline std::vector<cv::Rect>* get_faces(cv::Mat& current_image, int min_object_s
 
 inline void face_detection(cv::Mat& image)
 {
-   #ifdef DEBUG_FLAG
-      cv::namedWindow("debug_gray", CV_WINDOW_AUTOSIZE);
-      cv::namedWindow("debug_color", CV_WINDOW_AUTOSIZE);
-      cv::namedWindow("debug_blur", CV_WINDOW_AUTOSIZE);
-   #endif
-
    cv::Mat mat_gray = image;
 
    // Convert to gray scale
    cvtColor(image, mat_gray, CV_BGR2GRAY);
 
-   #ifdef DEBUG_FLAG
-      cv::imshow("debug_gray", mat_gray);
-      cv::imshow("debug_color", image);
-   #endif
-
    // Dynamically scale min object size by the width of the image (hueristically determined to be img_width / 4)
    int min_object_size = image.cols / 4;
 
-   std::vect<cv::Rect>* faces = get_faces(mat_gray, min_object_size);
+   std::vector<cv::Rect>* faces = get_faces(mat_gray, min_object_size);
 
    if (!faces) return;
 
-   cv::Mat face_roi_gray = mat_gray((*faces)[0]);
+   auto instance = ev10::face_recognition::get_instance();
 
-   // Print all the objects detected
-   cv::rectangle(image, *face, cv::Scalar(255, 0, 0));
+   for (std::size_t index = 0; index < faces->size(); ++index)
+   {
+      cv::Mat face_roi_gray = mat_gray((*faces)[index]);
 
-   delete face;
+      // Print all the objects detected
+      cv::rectangle(image, faces->at(index), cv::Scalar(255, 0, 0));
+
+      if (instance)
+      {
+         bool found = instance->decision(face_roi_gray);
+
+         std::cout << found << std::endl;
+
+      }
+   }
+
+   delete faces;
 
 }
 
