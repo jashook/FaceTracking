@@ -50,29 +50,26 @@
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-#define H_RANGE 106
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
 // Load Face cascade (.xml file)
 cv::CascadeClassifier face_cascade;
 cv::CascadeClassifier eye_cascade;
 
-inline cv::Rect* get_face_area(cv::Mat& current_image, int min_object_size)
+inline std::vector<cv::Rect>* get_faces(cv::Mat& current_image, int min_object_size)
 {
    // Detect faces
-   std::vector<cv::Rect> faces;
+   std::vector<cv::Rect>* faces = new std::vector<cv::Rect>();
 
-   face_cascade.detectMultiScale(current_image, faces, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE | CV_HAAR_FIND_BIGGEST_OBJECT, cv::Size(min_object_size, min_object_size));
+   face_cascade.detectMultiScale(current_image, *faces, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE , cv::Size(min_object_size, min_object_size));
 
    // Check to see that faces were found - if not, return
-   if (faces.size() < 1)
+   if (faces->size() < 1)
    {
+      delete faces;
+
       return nullptr;
    }
 
-   return new cv::Rect(faces[0]);
+   return faces;
 }
 
 inline void face_detection(cv::Mat& image)
@@ -96,11 +93,11 @@ inline void face_detection(cv::Mat& image)
    // Dynamically scale min object size by the width of the image (hueristically determined to be img_width / 4)
    int min_object_size = image.cols / 4;
 
-   cv::Rect* face = get_face_area(mat_gray, min_object_size);
+   std::vect<cv::Rect>* faces = get_faces(mat_gray, min_object_size);
 
-   if (!face) return;
+   if (!faces) return;
 
-   cv::Mat face_roi_gray = mat_gray(*face);
+   cv::Mat face_roi_gray = mat_gray((*faces)[0]);
 
    // Print all the objects detected
    cv::rectangle(image, *face, cv::Scalar(255, 0, 0));
@@ -133,7 +130,7 @@ int main()
       face_cascade.load("C:\\opencv\\sources\\data\\haarcascades\\haarcascade_frontalface_alt.xml");
 
    #else
-      face_cascade.load("/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_alt.xml");
+      face_cascade.load("haarcascade/haarcascade_frontalface_alt.xml");
 
    #endif
 
@@ -146,4 +143,4 @@ int main()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////

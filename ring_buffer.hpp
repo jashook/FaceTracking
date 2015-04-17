@@ -31,100 +31,100 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace ev10 {
-   namespace eIIe {
+namespace eIIe {
 
-      ////////////////////////////////////////////////////////////////////////////////
-      ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-      template<typename __Type, size_t __Size> class ring_buffer
+template<typename __Type, size_t __Size> class ring_buffer
+{
+   public:  // Constructor | Destructor
+
+      ring_buffer(size_t start_location = 0) { _ctor(start_location); }
+      ~ring_buffer() { _dtor(); }
+
+   public:  // Member Functions
+
+      bool empty() { return _empty(); }
+      __Type pop() { return _pop(); }
+      void push(__Type value) { _push(value); }
+
+   public:  // Public Operators
+
+      operator bool() { return _empty(); }
+
+   private: // Private Member Functions
+
+      void _ctor(size_t start_location)
       {
-         public:  // Constructor | Destructor
+         _m_start_index = 0;
+         _m_end_index = start_location - 1 < __Size ? start_location - 1 : 0;
+         _m_amount = 0;
 
-         ring_buffer(size_t start_location = 0) { _ctor(start_location); }
-         ~ring_buffer() { _dtor(); }
+         std::memset(_m_queue, 0, sizeof(__Type) * __Size);
+      }
 
-         public:  // Member Functions
+      void _dtor()
+      {
+         _m_start_index = 0;
+         _m_end_index = 0;
 
-         bool empty() { return _empty(); }
-         __Type pop() { return _pop(); }
-         void push(__Type value) { _push(value); }
+         std::memset(_m_queue, 0, sizeof(__Type) * __Size);
+      }
 
-         public:  // Public Operators
+      bool _empty()
+      {
+         return _m_amount == 0;
+      }
 
-         operator bool() { return _empty(); }
-
-         private: // Private Member Functions
-
-         void _ctor(size_t start_location)
+      __Type _pop()
+      {
+         if (_m_end_index == _m_start_index)
          {
-            _m_start_index = 0;
-            _m_end_index = start_location - 1 < __Size ? start_location - 1 : 0;
-            _m_amount = 0;
-
-            std::memset(_m_queue, 0, sizeof(__Type) * __Size);
+            throw std::runtime_error("[ev10::eIIe::ring_buffer::_pop] Attempting to remove a value that does not exist");
          }
 
-         void _dtor()
-         {
-            _m_start_index = 0;
-            _m_end_index = 0;
+         __Type temp = _m_queue[_m_start_index];
 
-            std::memset(_m_queue, 0, sizeof(__Type) * __Size);
-         }
+         // Increase the index then mode by the size to
+         // allow the queue to wrap to the beginning
+         ++_m_start_index %= __Size;
 
-         bool _empty()
-         {
-            return _m_amount == 0;
-         }
+         _m_amount = _m_amount == 0 ? _m_amount : _m_amount - 1;
 
-         __Type _pop()
-         {
-            if (_m_end_index == _m_start_index)
-            {
-               throw std::runtime_error("[ev10::eIIe::ring_buffer::_pop] Attempting to remove a value that does not exist");
-            }
+         return temp;
+      }
 
-            __Type temp = _m_queue[_m_start_index];
+      void _push(__Type& value)
+      {
+         // Add in the next element
+         _m_queue[_m_end_index] = value;
 
-            // Increase the index then mode by the size to
-            // allow the queue to wrap to the beginning
-            ++_m_start_index %= __Size;
+         // Increase the index then mod by the size to
+         // allow the queue to wrap to the beginning if full
+         ++_m_end_index %= __Size;
 
-            _m_amount = _m_amount == 0 ? _m_amount : _m_amount - 1;
+         // If more values were inserted then we have the capacity for
+         // then drop the first value inserted
+         _m_start_index = _m_end_index == _m_start_index ? _m_start_index + 1 : _m_start_index;
 
-            return temp;
-         }
+         _m_amount = _m_amount == __Size ? _m_amount : _m_amount + 1;
+      }
 
-         void _push(__Type& value)
-         {
-            // Add in the next element
-            _m_queue[_m_end_index] = value;
+   private: // Member Variables
 
-            // Increase the index then mod by the size to
-            // allow the queue to wrap to the beginning if full
-            ++_m_end_index %= __Size;
+      size_t _m_amount;
 
-            // If more values were inserted then we have the capacity for
-            // then drop the first value inserted
-            _m_start_index = _m_end_index == _m_start_index ? _m_start_index + 1 : _m_start_index;
+      size_t _m_end_index;
+      __Type _m_queue[__Size];
+      size_t _m_start_index;
 
-            _m_amount = _m_amount == __Size ? _m_amount : _m_amount + 1;
-         }
+}; // end of class ring_buffer
 
-         private: // Member Variables
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-         size_t _m_amount;
-
-         size_t _m_end_index;
-         __Type _m_queue[__Size];
-         size_t _m_start_index;
-
-      }; // end of class ring_buffer
-
-      ////////////////////////////////////////////////////////////////////////////////
-      ////////////////////////////////////////////////////////////////////////////////
-
-   } // end of namespace(eIIe)
+} // end of namespace(eIIe)
 } // end of namespace(ev10)
 
 ////////////////////////////////////////////////////////////////////////////////
